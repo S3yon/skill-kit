@@ -1,0 +1,29 @@
+{
+  "skill_name": "writing-check",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fixes-flags-keeps-facts",
+      "prompt": "This reads like AI, clean it up: 'Our new pipeline serves as a robust foundation — it's not just faster, it's a testament to the team. In order to ship, we cut build time from 12 minutes to 4.'",
+      "expected_output": "Runs the checker, rewrites without the dash, 'serves as', 'robust', the manufactured contrast, 'a testament to' and 'in order to', keeps the 12 to 4 minutes fact, and reports flag counts before and after.",
+      "files": [],
+      "assertions": [
+        "The checker script was run on the draft",
+        "The rewrite has no em-dash, 'serves as', 'robust', 'testament' or 'in order to'",
+        "The rewrite still says build time went from 12 minutes to 4",
+        "The reply gives the flag count before and after"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "quotes-stay",
+      "prompt": "Check this before I send it: 'The error said \"failed to leverage cache\" so I cleared it and the build passed.'",
+      "expected_output": "Leaves 'leverage' inside the quoted error message and says so in one line.",
+      "files": [],
+      "assertions": [
+        "The quoted error message is unchanged",
+        "The reply explains in one line why that flag stays"
+      ]
+    }
+  ]
+}
