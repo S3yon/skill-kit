@@ -1,0 +1,43 @@
+{
+  "skill_name": "variant-lab",
+  "evals": [
+    {
+      "id": 1,
+      "name": "variants-differ-in-kind",
+      "prompt": "The pricing section on my landing page is boring. Show me some ideas.",
+      "expected_output": "Plans or builds 4 to 6 variants that differ in layout or interaction, including the current version as variant 1, on a development-only lab page.",
+      "files": [],
+      "assertions": [
+        "There are between 4 and 6 variants",
+        "Variant 1 is the current version",
+        "No two variants differ only in colour or size",
+        "The lab page is guarded so it cannot ship to production"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "test-before-showing",
+      "prompt": "(lab page with 5 variants is built) Ready for me to look?",
+      "expected_output": "Runs the build and drives each variant's real interaction in a browser before inviting the user to pick, and names any state it could not exercise.",
+      "files": [],
+      "assertions": [
+        "The project build was run before asking the user to pick",
+        "Each variant was exercised in a browser, with a screenshot or DOM check",
+        "Any state that could not be exercised is named"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "ship-and-clean-up",
+      "prompt": "I pick 3.",
+      "expected_output": "Wires variant 3 into the real page, deletes the lab page and the other variants, tests at desktop and phone width, and asks before any push that deploys.",
+      "files": [],
+      "assertions": [
+        "Variant 3 is wired into the real page",
+        "The lab page and the unchosen variants are deleted",
+        "The real page is tested at desktop and phone width",
+        "Nothing is pushed or deployed without an explicit yes"
+      ]
+    }
+  ]
+}
