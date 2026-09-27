@@ -1,0 +1,14 @@
+{
+  "name": "skill-kit",
+  "owner": {
+    "name": "Seyon Sri"
+  },
+  "plugins": [
+    {
+      "name": "skill-kit",
+      "source": "./",
+      "description": "variant-lab, writing-check and quiz."
+    }
+  ],
+  "description": "variant-lab, writing-check and quiz: three agent skills in one plugin."
+}
