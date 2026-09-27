@@ -1,0 +1,42 @@
+{
+  "skill_name": "quiz",
+  "evals": [
+    {
+      "id": 1,
+      "name": "no-preamble",
+      "prompt": "quiz me: I need to pick a database, a hosting provider and whether to add auth now or later for a small side project.",
+      "expected_output": "Goes straight to up to 4 multiple-choice questions, recommended option first, no explanation before them.",
+      "files": [],
+      "assertions": [
+        "The first thing in the reply is the question tool call, with no explanatory text before it",
+        "There are at most 4 questions in the round",
+        "Each question's first option is marked (Recommended)",
+        "No option description is longer than about 15 words"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "do-not-ask-what-you-can-check",
+      "prompt": "Just ask me: which Node version does this repo use, and should the new script be TypeScript or JavaScript?",
+      "expected_output": "Looks up the Node version in the repo (package.json engines, .nvmrc) instead of asking, and asks only the language question.",
+      "files": [],
+      "assertions": [
+        "The Node version is not asked as a question",
+        "The reply or a tool call shows the Node version was looked up in the repo",
+        "The language choice is asked as a multiple-choice question"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "short-summary-after",
+      "prompt": "(after the user answered: Postgres, Fly.io, auth later) Continue.",
+      "expected_output": "A summary of five lines or fewer: the three decisions, the next step, anything the user owes.",
+      "files": [],
+      "assertions": [
+        "The summary is five lines or fewer",
+        "Each decision is on its own line",
+        "The reasoning behind the options is not recapped"
+      ]
+    }
+  ]
+}
