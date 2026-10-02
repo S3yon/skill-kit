@@ -308,9 +308,48 @@ def scan_commit(sha: str, level: str = "", patterns: list[Pattern] | None = None
     return list(dict.fromkeys(findings))
 
 
-def parse_args(argv: list[str]) -> tuple[str | None, str | None, list[str]]:
+HOOK = """#!/bin/sh
+# Installed by push-check --install-hook. Scans the commits each push would add.
+while read -r lref lsha rref rsha; do
+  case "$lsha" in *[!0]*) ;; *) continue ;; esac
+  case "$rsha" in
+    *[!0]*) {line} "$rsha..$lsha" ;;
+    *) {line} "$lsha" --not --remotes="$1" ;;
+  esac || {{ echo "pre-push: blocked by push-check" >&2; exit 1; }}
+done
+exit 0
+"""
+
+
+def install_hook() -> int:
+    """Write a pre-push hook that runs this script, unless git would ignore it or one exists."""
+    script = re.sub(r'([\\"$`])', r"\\\1", str(Path(__file__).resolve()))
+    line = f'python3 "{script}" --remote "$1"'
+    try:
+        hooks_path = git("config", "core.hooksPath").decode("utf-8", "replace").strip()
+    except subprocess.CalledProcessError:
+        hooks_path = ""
+    if hooks_path:
+        print(
+            f"push-check: core.hooksPath is {hooks_path}; git ignores .git/hooks. "
+            f"Add this line to {hooks_path}/pre-push:\n{line}"
+        )
+        return 1
+    hook = Path(git("rev-parse", "--git-path", "hooks").decode().strip(), "pre-push").resolve()
+    if hook.exists():
+        print(f"push-check: {hook} exists; not overwriting. Add this line to it:\n{line}")
+        return 1
+    hook.parent.mkdir(parents=True, exist_ok=True)
+    hook.write_text(HOOK.format(line=line), encoding="utf-8")
+    hook.chmod(0o755)
+    print(f"push-check: installed {hook}")
+    return 0
+
+
+def parse_args(argv: list[str]) -> tuple[str | None, str | None, bool, list[str]]:
     remote: str | None = None
     visibility: str | None = None
+    install = False
     revs: list[str] = []
     i = 0
     while i < len(argv):
@@ -318,6 +357,10 @@ def parse_args(argv: list[str]) -> tuple[str | None, str | None, list[str]]:
         if arg == "--":
             revs.extend(argv[i + 1:])
             break
+        if arg == "--install-hook":
+            install = True
+            i += 1
+            continue
         if arg in ("--remote", "--visibility"):
             if i + 1 >= len(argv) or argv[i + 1].startswith("-"):
                 raise UsageError(f"{arg} needs a value")
@@ -332,13 +375,15 @@ def parse_args(argv: list[str]) -> tuple[str | None, str | None, list[str]]:
             continue
         revs.append(arg)
         i += 1
-    return remote, visibility, revs
+    return remote, visibility, install, revs
 
 
 def main(argv: list[str]) -> int:
     try:
-        remote, visibility, revs = parse_args(argv)
+        remote, visibility, install, revs = parse_args(argv)
         git("rev-parse", "--git-dir")
+        if install:
+            return install_hook()
         commits = git("rev-list", "--reverse", *(revs or DEFAULT_RANGE)).decode().split()
     except UsageError as err:
         print(f"push-check: {err}\n{USAGE}", file=sys.stderr)

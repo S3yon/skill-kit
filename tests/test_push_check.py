@@ -50,6 +50,9 @@ class Repo:
         )
         return out.stdout.decode().strip()
 
+    def try_git(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", *args], cwd=self.root, env=self.env, capture_output=True)
+
     def write(self, path: str, data: str | bytes) -> None:
         target = self.root / path
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -430,6 +433,80 @@ class PushCheckTest(unittest.TestCase):
         code, out = repo.check()
         self.assertEqual(code, 0, out)
         self.assertNotIn("BLOCK", out)
+
+
+    def hooked_repo(self) -> tuple[Repo, Path]:
+        repo = self.new_repo()
+        bare = self.tmp / "remote.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(bare)], env=repo.env, check=True)
+        repo.git("remote", "add", "origin", str(bare))
+        code, out = repo.check("--install-hook")
+        self.assertEqual(code, 0, out + repo.last_stderr)
+        repo.write("a.txt", "one\n")
+        repo.commit("first")
+        repo.git("push", "-q", "origin", "main")
+        return repo, bare
+
+    def test_install_hook_writes_executable(self):
+        repo = self.new_repo()
+        code, out = repo.check("--install-hook")
+        hook = repo.root / ".git" / "hooks" / "pre-push"
+        self.assertEqual(code, 0, out + repo.last_stderr)
+        self.assertIn(f"push-check: installed {hook.resolve()}", out)
+        self.assertTrue(os.access(hook, os.X_OK))
+        text = hook.read_text()
+        self.assertTrue(text.startswith("#!/bin/sh\n"))
+        self.assertIn(f'python3 "{SCRIPT}" --remote "$1"', text)
+
+    def test_install_hook_refuses_existing(self):
+        repo = self.new_repo()
+        hook = repo.root / ".git" / "hooks" / "pre-push"
+        hook.parent.mkdir(exist_ok=True)
+        hook.write_text("#!/bin/sh\nexit 0\n")
+        code, out = repo.check("--install-hook")
+        self.assertEqual(code, 1, out)
+        self.assertIn(f"push-check: {hook.resolve()} exists; not overwriting. Add this line to it:", out)
+        self.assertIn(f'python3 "{SCRIPT}" --remote "$1"', out)
+        self.assertEqual(hook.read_text(), "#!/bin/sh\nexit 0\n")
+
+    def test_install_hook_reports_hooks_path(self):
+        repo = self.new_repo()
+        repo.git("config", "core.hooksPath", "myhooks")
+        code, out = repo.check("--install-hook")
+        self.assertEqual(code, 1, out)
+        self.assertIn(
+            "push-check: core.hooksPath is myhooks; git ignores .git/hooks. "
+            "Add this line to myhooks/pre-push:",
+            out,
+        )
+        self.assertIn(f'python3 "{SCRIPT}" --remote "$1"', out)
+        self.assertFalse((repo.root / ".git" / "hooks" / "pre-push").exists())
+        self.assertFalse((repo.root / "myhooks").exists())
+
+    def test_hook_blocks_bad_push(self):
+        repo, bare = self.hooked_repo()
+        before = repo.git("rev-parse", "origin/main")
+        repo.write("b.txt", j(["AK", "IA"]) + "E" * 16 + "\n")
+        repo.commit("add key")
+        push = repo.try_git("push", "origin", "main")
+        self.assertNotEqual(push.returncode, 0)
+        self.assertIn(b"pre-push: blocked by push-check", push.stderr)
+        remote = subprocess.run(
+            ["git", "--git-dir", str(bare), "rev-parse", "main"],
+            env=repo.env, capture_output=True, check=True,
+        )
+        self.assertEqual(remote.stdout.decode().strip(), before)
+
+    def test_hook_new_branch_and_delete(self):
+        repo, _ = self.hooked_repo()
+        repo.git("checkout", "-q", "-b", "feature")
+        repo.write("c.txt", "three\n")
+        repo.commit("third")
+        push = repo.try_git("push", "origin", "feature")
+        self.assertEqual(push.returncode, 0, push.stderr)
+        self.assertIn(b"push-check: 1 commits, 0 blocking", push.stdout + push.stderr)
+        delete = repo.try_git("push", "origin", "--delete", "feature")
+        self.assertEqual(delete.returncode, 0, delete.stderr)
 
 
 if __name__ == "__main__":
