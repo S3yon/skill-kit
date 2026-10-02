@@ -146,6 +146,21 @@ class Validate(unittest.TestCase):
         root = make_kit(self.tmp, manifests=manifests)
         self.assertProblem(root, "manifest versions differ: .claude-plugin/plugin.json=0.2.0, "
                                  ".claude-plugin/marketplace.json=0.1.0")
+        for rel in ("plugin.json", "gemini-extension.json"):
+            with self.subTest(rel=rel), tempfile.TemporaryDirectory() as tmp:
+                root = make_kit(tmp, manifests={
+                    ".claude-plugin/plugin.json": {"name": "kit", "version": "0.2.0"},
+                    rel: {"name": "kit", "version": "0.1.0"},
+                })
+                self.assertProblem(root, f"manifest versions differ: .claude-plugin/plugin.json=0.2.0, "
+                                         f"{rel}=0.1.0")
+
+    def test_cursor_marketplace_is_read(self):
+        root = make_kit(self.tmp, manifests={
+            ".claude-plugin/plugin.json": {"name": "kit", "version": "0.2.0"},
+            ".cursor-plugin/marketplace.json": "{",
+        })
+        self.assertProblem(root, ".cursor-plugin/marketplace.json: does not parse")
 
     def test_no_manifest_version(self):
         root = make_kit(self.tmp, manifests={".claude-plugin/plugin.json": {"name": "kit"}})

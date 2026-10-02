@@ -12,7 +12,13 @@ from __future__ import annotations
 
 import json, pathlib, sys
 
-MANIFESTS: tuple[str, ...] = (".claude-plugin/plugin.json", ".claude-plugin/marketplace.json")
+MANIFESTS: tuple[str, ...] = (
+    ".claude-plugin/plugin.json",
+    ".claude-plugin/marketplace.json",
+    "plugin.json",
+    "gemini-extension.json",
+    ".cursor-plugin/marketplace.json",
+)
 MIN_EVALS = 3
 
 def frontmatter(text: str) -> dict[str, str] | None:
