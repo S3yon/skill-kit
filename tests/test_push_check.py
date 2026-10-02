@@ -71,14 +71,18 @@ class Repo:
         self.env["PUSH_CHECK_PERSONAL"] = str(patterns)
 
     def check(
-        self, *args: str, path_prefix: str | None = None, env: dict[str, str] | None = None
+        self,
+        *args: str,
+        path_prefix: str | None = None,
+        env: dict[str, str] | None = None,
+        cwd: Path | None = None,
     ) -> tuple[int, str]:
         env = dict(self.env, **(env or {}))
         if path_prefix:
             env["PATH"] = path_prefix + os.pathsep + env.get("PATH", "")
         out = subprocess.run(
             [sys.executable, str(SCRIPT), *args],
-            cwd=self.root,
+            cwd=cwd or self.root,
             env=env,
             capture_output=True,
         )
@@ -175,6 +179,19 @@ class PushCheckTest(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertNotIn("WARN", out)
         self.assertIn("0 warnings", out)
+
+    def test_run_from_a_subdirectory_scans_the_whole_commit(self):
+        repo = self.new_repo()
+        key = j(["AK", "IA"]) + "A" * 16
+        repo.write("top.txt", key + "\n")
+        repo.write("src/inner.txt", key + "\n")
+        repo.write("tool", b"\x7fELF" + b"\0" * 60)
+        sha = repo.commit("add keys")
+        code, out = repo.check(cwd=repo.root / "src")
+        self.assertEqual(code, 1, out)
+        self.assertIn(f'BLOCK  {sha} "add keys": AWS access key in top.txt', out)
+        self.assertIn(f'BLOCK  {sha} "add keys": AWS access key in src/inner.txt', out)
+        self.assertIn(f'BLOCK  {sha} "add keys": executable binary added: tool', out)
 
     def test_root_commit_is_scanned(self):
         repo = self.new_repo()

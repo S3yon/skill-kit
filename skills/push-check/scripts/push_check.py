@@ -26,7 +26,10 @@ USAGE = (
     "[--install-hook] [<rev-list args>]"
 )
 DEFAULT_RANGE = ["HEAD", "--not", "--remotes"]
-PATHSPEC = ["--", ".", ":(exclude)*lock.json", ":(exclude)*.lock", ":(exclude)*lock.yaml"]
+# ":(top)" keeps the scan on the whole tree when the script runs from a subdirectory.
+PATHSPEC = [
+    "--", ":(top)", ":(top,exclude)*lock.json", ":(top,exclude)*.lock", ":(top,exclude)*lock.yaml",
+]
 MAGIC = ("7f454c46", "feedface", "feedfacf", "cefaedfe", "cffaedfe", "4d5a")
 INSTALLER_EXT = (".exe", ".dll", ".scr", ".com", ".msi", ".vbs", ".jar", ".apk", ".dmg", ".pkg")
 C_ESCAPES = {"a": 7, "b": 8, "t": 9, "n": 10, "v": 11, "f": 12, "r": 13, '"': 34, "\\": 92}
