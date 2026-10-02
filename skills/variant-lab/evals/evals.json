@@ -38,6 +38,32 @@
         "The real page is tested at desktop and phone width",
         "Nothing is pushed or deployed without an explicit yes"
       ]
+    },
+    {
+      "id": 4,
+      "name": "motion-tested-headless",
+      "prompt": "(lab page with 5 scroll-animation variants is built; the browser you have is an embedded pane in a background tab) Check the animations work.",
+      "expected_output": "Judges motion in a headless or foreground browser rather than the background pane, says why, and scrolls to each element before its screenshot.",
+      "files": [],
+      "assertions": [
+        "Motion is judged in a headless or foreground browser",
+        "The reply says background tabs or embedded panes can pause animation frames",
+        "Each screenshot is scrolled to its element"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "media-comparison-sheet",
+      "prompt": "Try 4 versions of the name card on this 1080x1920 clip.",
+      "expected_output": "One config per variant, all renders in one lab folder, one comparison sheet of numbered stills with the safe zone drawn, sent as a file or private page, and every variant listed in one line.",
+      "files": [],
+      "assertions": [
+        "There is one config file per variant",
+        "All renders go in one lab folder",
+        "There is one comparison sheet with numbered stills and the safe zone drawn",
+        "The sheet is sent as a file, or published as a private page",
+        "The reply lists every variant in one line each"
+      ]
     }
   ]
 }
