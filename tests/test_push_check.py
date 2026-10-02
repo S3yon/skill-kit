@@ -455,6 +455,33 @@ class PushCheckTest(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn("co-author trailer credits an AI tool", out)
 
+    def test_person_named_like_a_tool_passes(self):
+        for i, first in enumerate(["Cody", "Devin", "Jules", AI_NAME]):
+            with self.subTest(first=first):
+                repo = self.new_repo(f"h{i}")
+                repo.env["GIT_AUTHOR_NAME"] = first + " Martin"
+                repo.write("x.txt", "plain\n")
+                trailer = j(["Co-authored", "-by: "]) + f"{first} Fischer <{first.lower()}@example.com>"
+                repo.commit("add x\n\n" + trailer)
+                code, out = repo.check()
+                self.assertEqual(code, 0, out)
+                self.assertNotIn("BLOCK", out)
+
+    def test_tool_identity_forms_block(self):
+        idents = [
+            "Devin AI <devin@example.com>",
+            j(["google-labs-", "jules[bot]"]) + " <1+google-labs-jules[bot]@users.noreply.github.com>",
+            AI_NAME + " Martin <noreply@" + j(["anth", "ropic.com>"]),
+        ]
+        for i, ident in enumerate(idents):
+            with self.subTest(ident=ident):
+                repo = self.new_repo(f"t{i}")
+                repo.write("x.txt", "plain\n")
+                sha = repo.commit("add x\n\n" + j(["Co-authored", "-by: "]) + ident)
+                code, out = repo.check()
+                self.assertEqual(code, 1, out)
+                self.assertIn(f'BLOCK  {sha} "add x": co-author trailer credits an AI tool', out)
+
     def test_plain_tool_mention_passes(self):
         repo = self.new_repo()
         repo.write("x.txt", "plain\n")

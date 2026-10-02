@@ -41,6 +41,10 @@ AI_TOOLS = re.compile(
 GENERATED = re.compile(
     r"\bgenerated\s+(with|by)\b.*?(" + AI_TOOLS.pattern + r"|\b(ai|agent)\b)", re.I
 )
+# Tool names that are also first names: on an author or co-author line they need a bot marker,
+# or a name made only of tool words ("Devin AI"), so a person called Cody can still push.
+NAME_TOOLS = {"claude", "cody", "devin", "jules"}
+TOOL_WORDS = NAME_TOOLS | {"ai", "agent", "bot", "code", "assistant"}
 CO_AUTHOR = re.compile(r"^\s*co-authored-by:", re.I)
 PHONE = re.compile(
     r"(?<![\d-])(\+?1[\s.-])?(\(\d{3}\)\s?|\d{3}[\s.-])\d{3}[\s.-]\d{4}(?![\d-])"
@@ -281,15 +285,27 @@ def personal_findings(path: str, line: str, level: str, patterns: list[Pattern])
     return findings
 
 
+def is_ai_identity(ident: str) -> bool:
+    """True when a 'Name <email>' line is an AI tool rather than a person."""
+    words = {m.group(1).lower() for m in AI_TOOLS.finditer(ident)}
+    if not words:
+        return False
+    if words - NAME_TOOLS or "[bot]" in ident.lower():
+        return True
+    name = ident.split("<", 1)[0]
+    tokens = re.findall(r"[a-z]+", name.lower())
+    return bool(tokens) and all(t in TOOL_WORDS for t in tokens)
+
+
 def ai_credit(sha: str) -> list[Finding]:
     """AI tools named as author, committer, co-author or in a 'generated with' line."""
     meta = git("log", "-1", "--format=%an <%ae>%n%cn <%ce>%n%B", sha).decode("utf-8", "replace")
     lines = meta.split("\n")
     findings = []
-    if any(AI_TOOLS.search(line) for line in lines[:2]):
+    if any(is_ai_identity(line) for line in lines[:2]):
         findings.append(Finding("BLOCK", "author or committer is an AI tool", None))
     body = lines[2:]
-    if any(CO_AUTHOR.match(line) and AI_TOOLS.search(line) for line in body):
+    if any(CO_AUTHOR.match(line) and is_ai_identity(CO_AUTHOR.sub("", line)) for line in body):
         findings.append(Finding("BLOCK", "co-author trailer credits an AI tool", None))
     if any(GENERATED.search(line) for line in body):
         findings.append(Finding("BLOCK", "has a 'generated with' line", None))
