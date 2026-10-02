@@ -7,8 +7,9 @@
     {
       "name": "skill-kit",
       "source": "./",
-      "description": "variant-lab, writing-check and quiz."
+      "description": "Seven skills for the points where agent work reaches a person: quiz, variant-lab, writing-check, deliverable, proof-before-done, push-check and handoff.",
+      "version": "0.2.0"
     }
   ],
-  "description": "variant-lab, writing-check and quiz: three agent skills in one plugin."
+  "description": "Seven skills for the points where agent work reaches a person: quiz, variant-lab, writing-check, deliverable, proof-before-done, push-check and handoff."
 }

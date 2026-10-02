@@ -1,7 +1,7 @@
 {
   "name": "skill-kit",
-  "description": "Three skills: variant-lab (build 4-6 working options, test them, let the person pick, ship one), writing-check (flag AI writing tells in a draft), quiz (get decisions as quick multiple choice).",
-  "version": "0.1.0",
+  "description": "Seven skills for the points where agent work reaches a person: quiz, variant-lab, writing-check, deliverable, proof-before-done, push-check and handoff.",
+  "version": "0.2.0",
   "license": "MIT",
   "keywords": [
     "design",

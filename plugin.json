@@ -1,0 +1,6 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "skill-kit",
+  "version": "0.2.0",
+  "description": "Seven skills for the points where agent work reaches a person: quiz, variant-lab, writing-check, deliverable, proof-before-done, push-check and handoff."
+}
