@@ -7,6 +7,7 @@ Three agent skills, packaged as a plugin.
 | `variant-lab` | Builds 4 to 6 working versions of one element (a UI section, an animation, a video title card), tests each one, lets you pick, ships the winner and deletes the rest. |
 | `writing-check` | Flags the patterns that make a draft read as machine-generated, then fixes them. Includes a dependency-free checker script. |
 | `quiz` | Asks for decisions as up to 4 multiple-choice questions, then replies with a summary of five lines or fewer. |
+| `push-check` | Scans unpushed commits for secrets, malicious code, personal information and AI credit lines, and blocks the push on a serious finding. Installs as a pre-push hook. |
 
 Each skill is a plain `SKILL.md` folder, so any agent tool that reads that format can use it.
 
