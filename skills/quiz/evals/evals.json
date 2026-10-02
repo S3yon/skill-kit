@@ -37,6 +37,32 @@
         "Each decision is on its own line",
         "The reasoning behind the options is not recapped"
       ]
+    },
+    {
+      "id": 4,
+      "name": "draft-approval-in-text",
+      "prompt": "Draft replies to Sam and to Priya declining Thursday's meeting, and get my OK before sending.",
+      "expected_output": "Both drafts in full in the reply text, one per recipient, no placeholders, then a plain-text yes? and a stop. Nothing is sent and no draft sits in a question tool.",
+      "files": [],
+      "assertions": [
+        "Both drafts appear in full in the reply text",
+        "There is one draft per recipient",
+        "No {placeholder} is left",
+        "No draft is inside a multiple-choice question or option preview",
+        "The reply ends with a plain-text yes? and nothing is sent"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "reversible-step-not-asked",
+      "prompt": "The build fails on a missing import of parse_date in report.py. I think adding it fixes it.",
+      "expected_output": "Adds the import and reruns the build in the same turn, then reports the result. No permission asked for the local change.",
+      "files": [],
+      "assertions": [
+        "The import is added and the build is rerun in the same turn",
+        "The reply does not ask permission for the local change",
+        "The reply does not end on 'say go' or a similar prompt"
+      ]
     }
   ]
 }
