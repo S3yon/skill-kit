@@ -16,17 +16,80 @@ Each skill is a plain `SKILL.md` folder, so any agent tool that reads that forma
 
 ## Install
 
-As a plugin:
+### Claude Code
 
 ```
 /plugin marketplace add S3yon/skill-kit
 /plugin install skill-kit@skill-kit
 ```
 
-The skills then show as `skill-kit:variant-lab`, `skill-kit:writing-check` and `skill-kit:quiz`.
+The skills then show as `skill-kit:<name>`, for example `skill-kit:quiz`.
 
-Or copy a single skill folder from `skills/` into `~/.claude/skills/` or a project's
-`.claude/skills/`.
+Checked against https://code.claude.com/docs/en/plugin-marketplaces, 2026-10-02.
+
+### GitHub Copilot CLI
+
+Reads the same plugin manifests as Claude Code.
+
+```
+copilot plugin marketplace add S3yon/skill-kit
+copilot plugin install skill-kit@skill-kit
+```
+
+Or in one step: `copilot plugin install S3yon/skill-kit`.
+
+Checked against https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference, 2026-10-02.
+
+### Qwen Code
+
+Reads the same marketplace file as Claude Code.
+
+```
+qwen extensions install S3yon/skill-kit:skill-kit
+```
+
+Checked against https://github.com/QwenLM/qwen-code/blob/main/docs/users/extension/introduction.md, 2026-10-02.
+
+### Gemini CLI
+
+Reads `gemini-extension.json` and loads `skills/`.
+
+```
+gemini extensions install https://github.com/S3yon/skill-kit
+```
+
+Checked against https://github.com/google-gemini/gemini-cli/blob/main/docs/extensions/reference.md, 2026-10-02.
+
+### Codex
+
+Reads the root `plugin.json` and finds `skills/` on its own.
+
+```
+codex plugin marketplace add S3yon/skill-kit
+codex plugin add skill-kit@skill-kit
+```
+
+Checked against https://developers.openai.com/plugins/build/plugins, 2026-10-02.
+
+### Cursor
+
+Reads the root `plugin.json` and `.cursor-plugin/marketplace.json`. Open Customize, then
+From GitHub Repository, and enter `S3yon/skill-kit`.
+
+Checked against https://cursor.com/docs/plugins, 2026-10-02.
+
+### Copy a folder
+
+Copy one folder from `skills/` into the tool's skills folder:
+
+| Tool | For your user | For one project |
+|---|---|---|
+| Claude Code | `~/.claude/skills/` | `.claude/skills/` |
+| Codex, Cursor, Gemini CLI, Copilot CLI | `~/.agents/skills/` | `.agents/skills/` |
+| Qwen Code | `~/.qwen/skills/` | `.qwen/skills/` |
+
+No manual install test was run. Of these tools, only the Cursor CLI was installed on the
+machine where the steps were checked, and it was not signed in, so it could not load a plugin.
 
 ## The checker on its own
 
