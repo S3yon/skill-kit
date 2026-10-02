@@ -8,6 +8,7 @@ Three agent skills, packaged as a plugin.
 | `writing-check` | Flags the patterns that make a draft read as machine-generated, then fixes them. Includes a dependency-free checker script. |
 | `quiz` | Asks for decisions as up to 4 multiple-choice questions, then replies with a summary of five lines or fewer. |
 | `push-check` | Scans unpushed commits for secrets, malicious code, personal information and AI credit lines, and blocks the push on a serious finding. Installs as a pre-push hook. |
+| `proof-before-done` | Reports work as done only with a tool result, and outside facts only with a source. |
 
 Each skill is a plain `SKILL.md` folder, so any agent tool that reads that format can use it.
 
