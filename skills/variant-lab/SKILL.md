@@ -29,19 +29,25 @@ ship one, remove the rest.
   on the background it would really sit on, with one line for where it goes and one for how to
   try it. Guard the page so it cannot ship to production (return 404 outside development).
   If a state is hard to reach on demand, add a query switch that only works on that page.
-- **Rendered media:** render a short clip of each variant and one comparison sheet (a grid of
-  stills with the variant numbers and the safe zone marked).
+- **Rendered media:** one config file per variant, every render in one lab folder, and one
+  comparison sheet: a grid of numbered stills with the safe zone drawn.
 
 ## 4. Test before showing anyone
 - The project's build must pass with the lab in it.
 - Drive the real interaction for each variant (hover, click, scroll, tap, or play the clip) in
   a real browser or player and look at the result yourself. For UI, assert a DOM or style
-  change and take a screenshot; background tabs often pause animation, so use a foreground
-  or headless browser for motion.
+  change and take a screenshot.
+
+- Judge motion in a headless or foreground browser. Background tabs and some embedded browser
+  panes pause animation frames.
+- Screenshot tools capture the viewport only. Scroll to the element, or hide what is above it.
+- If a running dev server holds the build output folder, build a copy elsewhere.
 - Fix what is broken before step 5. Say which states you could not exercise.
 
 ## 5. Let the person pick
-- Give the lab address or send the comparison sheet, then list the variants, one line each.
+- Send the comparison sheet as a file, or publish the lab as a private page when you can, so
+  the person can pick from a phone. List every variant in one line too, so the choice never
+  depends on the image loading.
 - Ask with the `quiz` skill: pick one, several, "combine N and M", or "show me more".
   If they ask for a mix or more, add it to the lab and go again.
 
