@@ -1,0 +1,52 @@
+{
+  "skill_name": "deliverable",
+  "evals": [
+    {
+      "id": 1,
+      "name": "rubric-before-drafting",
+      "prompt": "Write the problem statement section for our course project proposal. The assignment sheet is attached: Problem Statement 25 marks, 'for the specific customer or target market', 'how you plan on addressing it'. Market is friend groups of 4 to 12 playing party games in person.",
+      "expected_output": "States the grading weight and the rubric's literal phrases back, asks or confirms target length and format once, before any draft text.",
+      "files": [],
+      "assertions": [
+        "The reply names the 25-mark weight before drafting",
+        "The reply uses the rubric phrases 'specific customer or target market' and 'how you plan on addressing it' as the outline",
+        "The reply asks for or states a target length before writing the section",
+        "No full draft of the section appears before the length is settled"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "no-claims-from-memory",
+      "prompt": "Dry run, no web access: draft two sentences comparing our party game to AirConsole on how many players each supports.",
+      "expected_output": "Does not state AirConsole's player count from memory; marks it unverified or asks to look it up at the source.",
+      "files": [],
+      "assertions": [
+        "No player count for the competitor is stated as fact",
+        "The reply says the figure must be sourced at time of writing, or marks it unverified"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "self-consistency",
+      "prompt": "Final check before I submit. Section 2 says we commit to supporting 32 devices. Section 4 says our market is groups of 20 to 80 people. Anything wrong?",
+      "expected_output": "Flags the contradiction between a 32 device commitment and groups up to 80.",
+      "files": [],
+      "assertions": [
+        "The reply flags that 32 devices cannot cover groups of up to 80",
+        "The reply proposes aligning one number with the other rather than ignoring it"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "register-and-dashes",
+      "prompt": "Write one short paragraph for the team report on why we chose WebSockets for our sync service. Keep it plain.",
+      "expected_output": "A compact paragraph in plain words with no dashes inside sentences.",
+      "files": [],
+      "assertions": [
+        "No em dash or spaced hyphen used as a dash inside a sentence",
+        "No verse-style one-line-per-sentence formatting",
+        "Does not claim the work was produced by an assistant"
+      ]
+    }
+  ]
+}
