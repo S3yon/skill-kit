@@ -1,0 +1,50 @@
+{
+  "skill_name": "handoff",
+  "evals": [
+    {
+      "id": 1,
+      "name": "handoff-has-uncommitted-and-why",
+      "prompt": "(src/export.py has uncommitted half-done changes) I'm out of credits, hand off.",
+      "expected_output": "Writes a handoff section that lists src/export.py as uncommitted and says why, and leaves the half-done change out of any commit.",
+      "files": [],
+      "assertions": [
+        "The section lists src/export.py as uncommitted, with the reason",
+        "The half-done change is not committed"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "commits-only-handoff-file",
+      "prompt": "(src/export.py has uncommitted half-done changes) I'm out of credits, hand off.",
+      "expected_output": "Commits the handoff file on its own, with git commit -- HANDOFF.md or an equivalent that leaves src/export.py out.",
+      "files": [],
+      "assertions": [
+        "The commit includes only HANDOFF.md (git commit -- HANDOFF.md, or an equivalent)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "pickup-by-topic",
+      "prompt": "(HANDOFF.md has open sections 'billing export' (older) and 'login page' (newer)) Pick up the billing export handoff.",
+      "expected_output": "Reads the billing export section rather than the newest one, marks it picked up, and runs git log and git status before continuing.",
+      "files": [],
+      "assertions": [
+        "The billing export section is read, not the newest one",
+        "Its mark changes to (picked up)",
+        "git log and git status are run"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "no-open-sections-asks",
+      "prompt": "(HANDOFF.md has two open sections) Pick up where we left off.",
+      "expected_output": "Lists both open sections and asks which one to pick up, starting neither.",
+      "files": [],
+      "assertions": [
+        "Both open sections are listed",
+        "The reply asks which one to pick up",
+        "Neither is started before the answer"
+      ]
+    }
+  ]
+}

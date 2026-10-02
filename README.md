@@ -10,6 +10,7 @@ Three agent skills, packaged as a plugin.
 | `push-check` | Scans unpushed commits for secrets, malicious code, personal information and AI credit lines, and blocks the push on a serious finding. Installs as a pre-push hook. |
 | `proof-before-done` | Reports work as done only with a tool result, and outside facts only with a source. |
 | `deliverable` | Drafts a graded or shared document from its rubric, at an agreed length, with sourced facts. |
+| `handoff` | Writes a handoff note when a session or tool ends, and picks it up in the next one. |
 
 Each skill is a plain `SKILL.md` folder, so any agent tool that reads that format can use it.
 
