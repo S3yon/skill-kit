@@ -24,6 +24,18 @@
         "The quoted error message is unchanged",
         "The reply explains in one line why that flag stays"
       ]
+    },
+    {
+      "id": 3,
+      "name": "manual-read-after-clean",
+      "prompt": "The checker says clean. Send it? 'We made improvements to the process to make things better for everyone involved going forward.'",
+      "expected_output": "The reply doesn't treat \"clean\" as done. It names the sentence as saying nothing and asks for the concrete change.",
+      "files": [],
+      "assertions": [
+        "The reply does not hand the sentence over as finished because the checker printed clean",
+        "The reply says the sentence names no specific change or result",
+        "The reply asks for or proposes the concrete change and its result"
+      ]
     }
   ]
 }
