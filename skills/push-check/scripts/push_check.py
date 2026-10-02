@@ -85,7 +85,7 @@ LINE_RULES: list[tuple[str, str, re.Pattern]] = [
     ("BLOCK", "decode-and-run", re.compile(
         r"base64\s+(-d|--decode|-D)\b.*\|\s*(sudo\s+)?(ba|z)?sh\b"
         r"|\b(eval|exec)\s*\(\s*(atob|Buffer\.from|base64_decode|base64\.b64decode|unescape)\s*\(")),
-    ("BLOCK", "destructive delete", re.compile(r"\brm\s+-rf\s+(/|~|\$HOME)(\s|$|[\"'])")),
+    ("BLOCK", "destructive delete", re.compile(r"\brm\s+-rf\s+\"?(/|~|\$HOME|\$\{HOME\})/?\*?\"?(\s|$|[\"'])")),
     ("BLOCK", "crypto miner", re.compile(r"stratum\+tcp://|\b" + "xm" + "rig" + r"\b", re.I)),
     ("WARN", "pipes a download into a shell",
      re.compile(r"\b(curl|wget)\b[^|]*\|\s*(sudo\s+)?(ba|z)?sh\b")),
