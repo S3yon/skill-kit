@@ -12,6 +12,7 @@ error. Standard library only, Python 3.10 or later.
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -29,6 +30,23 @@ PATHSPEC = ["--", ".", ":(exclude)*lock.json", ":(exclude)*.lock", ":(exclude)*l
 MAGIC = ("7f454c46", "feedface", "feedfacf", "cefaedfe", "cffaedfe", "4d5a")
 INSTALLER_EXT = (".exe", ".dll", ".scr", ".com", ".msi", ".vbs", ".jar", ".apk", ".dmg", ".pkg")
 C_ESCAPES = {"a": 7, "b": 8, "t": 9, "n": 10, "v": 11, "f": 12, "r": 13, '"': 34, "\\": 92}
+AI_TOOLS = re.compile(
+    r"\b(claude|anthropic|chatgpt|openai|copilot|gemini|codex|cursor|devin|aider|windsurf"
+    r"|cody|qwen|grok|jules)\b",
+    re.I,
+)
+GENERATED = re.compile(
+    r"\bgenerated\s+(with|by)\b.*?(" + AI_TOOLS.pattern + r"|\b(ai|agent)\b)", re.I
+)
+CO_AUTHOR = re.compile(r"^\s*co-authored-by:", re.I)
+PHONE = re.compile(
+    r"(?<![\d-])(\+?1[\s.-])?(\(\d{3}\)\s?|\d{3}[\s.-])\d{3}[\s.-]\d{4}(?![\d-])"
+)
+DIGIT_PUNCT = re.compile(r"[\s().+\-]")
+GITHUB_SLUG = re.compile(
+    r"^(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)"
+    r"([^/\s]+/[^/\s]+?)(?:\.git)?/?$"
+)
 
 
 class Finding(NamedTuple):
@@ -39,6 +57,12 @@ class Finding(NamedTuple):
 
 class UsageError(Exception):
     pass
+
+
+class Pattern(NamedTuple):
+    kind: str
+    value: str
+    digits: bool
 
 
 # Two of these patterns would match their own source text, so they are joined from pieces.
@@ -182,14 +206,105 @@ def file_findings(sha: str) -> list[Finding]:
     return findings
 
 
-def scan_commit(sha: str) -> list[Finding]:
+def patterns_path() -> Path:
+    env = os.environ.get("PUSH_CHECK_PERSONAL")
+    return Path(env) if env else Path.home() / ".config" / "push-check" / "personal.txt"
+
+
+def load_patterns() -> list[Pattern] | None:
+    """The person's `kind|value` lines, or None when the file can't be read."""
+    try:
+        text = patterns_path().read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    patterns = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "|" not in line:
+            continue
+        kind, value = (part.strip() for part in line.split("|", 1))
+        if value:
+            digits = re.fullmatch(r"[0-9]+", value) is not None
+            patterns.append(Pattern(kind, value.lower(), digits))
+    return patterns
+
+
+def github_visibility(slug: str) -> str:
+    if not shutil.which("gh"):
+        return ""
+    out = subprocess.run(
+        ["gh", "repo", "view", slug, "--json", "visibility", "-q", ".visibility"],
+        capture_output=True,
+    )
+    return out.stdout.decode("utf-8", "replace").strip().upper() if out.returncode == 0 else ""
+
+
+def personal_level(remote: str | None, visibility: str | None) -> tuple[str, str]:
+    """How personal-info matches count ("", WARN or BLOCK) and the note for the summary."""
+    if visibility == "private":
+        return "", "personal info skipped (--visibility private)"
+    if visibility == "public":
+        level, note = "BLOCK", "personal info blocks (--visibility public)"
+    elif remote is not None:
+        try:
+            url = git("remote", "get-url", remote).decode("utf-8", "replace").strip()
+        except subprocess.CalledProcessError:
+            url = remote
+        match = GITHUB_SLUG.match(url)
+        vis = github_visibility(match.group(1)) if match else ""
+        if vis in ("PRIVATE", "INTERNAL"):
+            return "", f"personal info skipped, {match.group(1)} is private"
+        if vis == "PUBLIC":
+            level, note = "BLOCK", f"personal info blocks, {match.group(1)} is public"
+        else:
+            level, note = "BLOCK", f"personal info blocks, visibility of {remote} unknown"
+    else:
+        level, note = "WARN", "no remote given, personal info warns only"
+    if not patterns_path().is_file():
+        note += "; no patterns file, generic checks only"
+    return level, note
+
+
+def personal_findings(path: str, line: str, level: str, patterns: list[Pattern]) -> list[Finding]:
+    lower = line.lower()
+    digits = DIGIT_PUNCT.sub("", line)
     findings = [
-        Finding(level, label, path)
-        for path, line in added_lines(sha)
-        for level, label, pattern in LINE_RULES
-        if pattern.search(line)
+        Finding(level, f"personal info ({p.kind})", path)
+        for p in patterns
+        if p.value in (digits if p.digits else lower)
     ]
+    if PHONE.search(line):
+        findings.append(Finding("WARN", "looks like a phone number", path))
+    return findings
+
+
+def ai_credit(sha: str) -> list[Finding]:
+    """AI tools named as author, committer, co-author or in a 'generated with' line."""
+    meta = git("log", "-1", "--format=%an <%ae>%n%cn <%ce>%n%B", sha).decode("utf-8", "replace")
+    lines = meta.split("\n")
+    findings = []
+    if any(AI_TOOLS.search(line) for line in lines[:2]):
+        findings.append(Finding("BLOCK", "author or committer is an AI tool", None))
+    body = lines[2:]
+    if any(CO_AUTHOR.match(line) and AI_TOOLS.search(line) for line in body):
+        findings.append(Finding("BLOCK", "co-author trailer credits an AI tool", None))
+    if any(GENERATED.search(line) for line in body):
+        findings.append(Finding("BLOCK", "has a 'generated with' line", None))
+    return findings
+
+
+def scan_commit(sha: str, level: str = "", patterns: list[Pattern] | None = None) -> list[Finding]:
+    findings: list[Finding] = []
+    for path, line in added_lines(sha):
+        findings += [
+            Finding(rule_level, label, path)
+            for rule_level, label, pattern in LINE_RULES
+            if pattern.search(line)
+        ]
+        if level:
+            findings += personal_findings(path, line, level, patterns or [])
     findings += file_findings(sha)
+    findings += ai_credit(sha)
     return list(dict.fromkeys(findings))
 
 
@@ -240,11 +355,13 @@ def main(argv: list[str]) -> int:
         print("push-check: no commits to check")
         return 0
 
+    level, note = personal_level(remote, visibility)
+    patterns = load_patterns() if level else None
     blocks = warns = 0
     for sha in commits:
         meta = git("log", "-1", "--format=%h%x00%s", sha).decode("utf-8", "replace")
         short, subject = meta.rstrip("\n").split("\0", 1)
-        for f in scan_commit(sha):
+        for f in scan_commit(sha, level, patterns):
             what = f"{f.what} in {f.file}" if f.file else f.what
             print(f'{f.level:<6} {short} "{subject}": {what}')
             if f.level == "BLOCK":
@@ -255,7 +372,7 @@ def main(argv: list[str]) -> int:
     checks = "built-in checks + ClamAV" if shutil.which("clamscan") else "built-in checks"
     print(
         f"push-check: {len(commits)} commits, {blocks} blocking, {warns} warnings "
-        f"({checks}; personal info off)"
+        f"({checks}; {note})"
     )
     return 1 if blocks else 0
 
