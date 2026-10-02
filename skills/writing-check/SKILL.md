@@ -24,6 +24,8 @@ careful human writing. The full catalogue with examples is [tells.md](tells.md).
 - Keep the author's meaning and facts. Change wording, not claims.
 - A flag inside a quote, a code block or a proper name stays. Say so in one line.
 - Do not add new phrasing from the list while fixing another flag.
+- For a document that will be graded, submitted or read by others, use the `deliverable` skill
+  too. This check is one of its steps.
 
 ## Done when
 The checker prints `clean`, or every remaining flag is explained in one line, and the manual
