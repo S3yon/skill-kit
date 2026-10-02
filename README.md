@@ -1,16 +1,21 @@
 # skill-kit
 
-Three agent skills, packaged as a plugin.
+Agent skills for the points where an agent's work reaches a person.
 
-| Skill | What it does |
-|---|---|
-| `variant-lab` | Builds 4 to 6 working versions of one element (a UI section, an animation, a video title card), tests each one, lets you pick, ships the winner and deletes the rest. |
-| `writing-check` | Flags the patterns that make a draft read as machine-generated, then fixes them. Includes a dependency-free checker script. |
-| `quiz` | Asks for decisions as up to 4 multiple-choice questions, then replies with a summary of five lines or fewer. |
-| `push-check` | Scans unpushed commits for secrets, malicious code, personal information and AI credit lines, and blocks the push on a serious finding. Installs as a pre-push hook. |
-| `proof-before-done` | Reports work as done only with a tool result, and outside facts only with a source. |
-| `deliverable` | Drafts a graded or shared document from its rubric, at an agreed length, with sourced facts. |
-| `handoff` | Writes a handoff note when a session or tool ends, and picks it up in the next one. |
+| When | Skill | What it does |
+|---|---|---|
+| A decision is needed | `quiz` | Asks it as multiple choice |
+| Options to pick from | `variant-lab` | Builds and tests 4 to 6 working versions |
+| Writing is handed over | `writing-check` | Flags AI writing patterns |
+| A graded or shared document | `deliverable` | Drafts it from the rubric |
+| The agent says done | `proof-before-done` | Shows the tool result as proof |
+| A push to a public repo | `push-check` | Blocks secrets, malicious code and personal information |
+| A session or tool ends | `handoff` | Writes and picks up handoff notes |
+
+These are the points where agent work costs a person time or embarrassment: a question buried
+in a long reply, a claim with no source, a key in a public commit. Process kits such as
+[superpowers](https://github.com/obra/superpowers) cover how an agent builds. This kit covers
+what happens when that work meets a person, and works alongside them.
 
 Each skill is a plain `SKILL.md` folder, so any agent tool that reads that format can use it.
 
@@ -91,22 +96,48 @@ Copy one folder from `skills/` into the tool's skills folder:
 No manual install test was run. Of these tools, only the Cursor CLI was installed on the
 machine where the steps were checked, and it was not signed in, so it could not load a plugin.
 
-## The checker on its own
+## Always-on snippet
 
-`skills/writing-check/scripts/slop_check.py` needs only Python 3.
+Skills load when their description matches the task. To have three of the rules apply on every
+task, paste these lines into a project's agent instructions file:
+
+```
+- Report an action as done only with the tool result that shows it, and an outside fact only with its source.
+- Put any draft that needs approval in full in the reply text.
+- Run push-check before any push to a public remote.
+```
+
+## The scripts on their own
+
+Both need only Python 3.10 or later. `push_check.py` also needs git.
+
+`skills/writing-check/scripts/slop_check.py` checks a draft:
 
 ```
 python3 skills/writing-check/scripts/slop_check.py draft.md
 ```
 
-It prints one line per flag with the line number and a replacement, and exits 1 if anything
-was flagged. The patterns and why they are on the list: [tells.md](skills/writing-check/tells.md).
+It prints one line per flag with the line number and a replacement. Exit 0 means clean, 1 means
+something was flagged. The patterns and why they are on the list:
+[tells.md](skills/writing-check/tells.md).
 
-## Tests and evals
+`skills/push-check/scripts/push_check.py` checks commits before a push:
 
-- `python3 -m unittest discover tests` runs the checker tests.
-- `skills/<name>/evals/evals.json` holds prompts with checkable assertions for each skill.
-  Run a prompt with and without the skill and grade the reply against the assertions.
+```
+python3 skills/push-check/scripts/push_check.py --remote origin
+python3 skills/push-check/scripts/push_check.py --install-hook
+```
+
+With no range it scans the unpushed commits. `--install-hook` installs it as the repo's
+pre-push hook. Exit 0 means nothing blocks, 1 means something does, 2 means a usage error.
+
+## Tests, CI and evals
+
+- `python3 -m unittest discover tests` runs the script tests.
+- `python3 scripts/validate.py` checks every skill folder, eval file and plugin manifest.
+- CI runs both on every push and pull request, on Python 3.10 and the latest 3.x.
+- Each skill's `evals/evals.json` holds prompts with checkable assertions. How to run and grade
+  them: [docs/evals.md](docs/evals.md).
 
 ## License
 
